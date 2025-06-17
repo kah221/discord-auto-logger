@@ -1,0 +1,75 @@
+■ .envの説明
+DISCORD_BOT_TOKEN：BotのTOKEN
+
+DISCORD_GUILD_ID：作業鯖のID（ツリーコマンドを即座に反映させるために特定のギルドに対して同期をかける時に使う）
+
+LOG_OUTPUT_ID_DM：ATLoggerにログを吐き出させる専用のテキストチャンネル DMにする
+SUMMARY_OUTPUT_TCID：週間報告専用のテキストチャンネルID
+DISCORD_USERID_DR：ユーザID自分
+
+TARGET_VC_ID_1：記録対象のVCID No.1
+TARGET_VC_ID_2：記録対象のVCID No.2
+
+TEST_LOG_ID：testsa-ba-のログ出力用テキストチャンネルID
+TEST_VC_ID：testsa-ba-のVCチャンネルID
+
+
+■ active_vc_user_stateの仕様
+- active_vc_user_stateは辞書
+
+
+■ 日付フォーマットについて
+自分がよく使う「250515」は「%y%m%d」
+
+%y: 西暦の下2桁
+%m: 0埋めされた月
+%d: 0埋めされた日
+
+★datetimeｵﾌﾞｼﾞｪｸﾄ → %y%m%d 変換
+my_format = "%y%m%d"
+<datetimeｵﾌﾞｼﾞｪｸﾄ>.strftime(my_format) ← datetimeｵﾌﾞｼﾞｪｸﾄに対してメソッドを適用
+
+★%y%m%d → datetimeｵﾌﾞｼﾞｪｸﾄ 変換
+string = "250516"
+my_format = "%y%m%d"
+datetime.datetime.striptime(string, my_format) ← datetimeｵﾌﾞｼﾞｪｸﾄに対してメソッドを適用（この引数に250516を入れる）
+
+---------------------------------------------
+没案
+# ?????コードが面倒なので、開始時刻が先週の月曜日の5時以降のデータに絞る（先々週の日曜日の23:50~日をまたいで00:30まで作業した場合、これは無視される。）
+# 前提として, 1週間以上連続で入ることはないとする
+# A:手前にはみ出る場合
+#  - csv第4列が期間内と合致する行を探す
+#  - その行に対してspan_startを引いた値をtotalに加算
+# B:後ろにはみ出る場合
+#  - csvの第3列が期間内, かつ第4列が期間からはみ出た行を探す
+#  - その行に対して, 計測終了datetimeを引いた値をtotalに加算
+↓
+結局開始時刻が指定期間内にあるログのtotal_timeのみを加算することにした
+
+------------------------------
+
+3gou各種コマンド
+
+■ 新しくスクリプトを更新した時
+- pythonスクリプトをwinSCPで転送上書きの後、3gouで
+sudo systemctl daemon-reload
+sudo systemctl restart atlogger.service
+
+■ 一旦停止する時（あくまで一時的で、自動起動設定になっていればその後勝手に起動する）
+sudo systemctl stop atlogger.service
+
+■ 無効化（停止）する時（stopではなく再起動後も停止したままにしたい時）
+sudo systemctl disable atlogger.service
+
+■ 有効化（開始）する時（disableの状態のままだと、restartしてもその後何らかのきっかけで停止した後、自動で起動されないのでenableしておく必要がある）
+sudo systemctl enable atlogger.service
+
+■ 状態を確認する時
+sudo systemctl status atlogger.service
+または
+sudo systemctl is-active atlogger.service
+
+■ 開始する時（enableになっているか確認しておくように）
+sudo systemctl restart atlogger.service
+
